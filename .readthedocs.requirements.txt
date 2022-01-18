@@ -1,0 +1,6 @@
+mkdocs==1.2.3
+mkdocs-material==8.1.7
+mkdocstrings==0.17.0
+
+blake2signer==2.1.0
+starlette==0.17.1

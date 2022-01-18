@@ -1,0 +1,83 @@
+site_name: ASGI Signing Middleware Docs
+repo_name: hackancuba/asgi-signing-middleware
+repo_url: https://gitlab.com/hackancuba/asgi-signing-middleware
+edit_uri: ''
+site_description: ASGI Signing Middleware documentation
+site_author: HacKan
+copyright: Copyright &copy; 2022 HacKan
+site_url: https://asgi-signing-middleware.hackan.net/
+
+theme:
+  name: material
+  palette:
+    - media: '(prefers-color-scheme: light)'
+      scheme: default
+      toggle:
+        icon: material/eye-outline
+        name: Switch to dark mode
+      primary: teal
+      accent: teal
+    - media: '(prefers-color-scheme: dark)'
+      scheme: slate
+      toggle:
+        icon: material/eye
+        name: Switch to light mode
+      primary: teal
+      accent: teal
+  font:
+    text: Lato
+    code: Fira Code
+  features:
+    - search.suggest
+    - search.highlight
+    - navigation.top
+    - navigation.tracking
+    - navigation.sections
+  icon:
+    repo: fontawesome/brands/gitlab
+  language: en
+
+nav:
+  - 'index.md'
+  - 'examples.md'
+  - 'contrib.md'
+  - 'faq.md'
+  - Code References:
+    - 'cookie.md'
+  - Releases:
+    - 'changelog.md'
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          docstring_style: 'restructured-text'
+          rendering:
+            show_root_heading: true
+      watch:
+        - asgi_signing_middleware
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/gitlab
+      link: https://gitlab.com/hackancuba
+    - icon: fontawesome/brands/github
+      link: https://github.com/hackancuba
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/hackancuba
+    - icon: fontawesome/solid/globe
+      link: https://hackan.net

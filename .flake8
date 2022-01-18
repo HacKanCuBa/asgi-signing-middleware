@@ -1,0 +1,40 @@
+[flake8]
+rst-directives =
+    # These are sorted alphabetically - but that does not matter
+    autosummary,data,currentmodule,deprecated,
+    glossary,moduleauthor,plot,testcode,
+    versionadded,versionchanged,
+
+rst-roles =
+    attr,class,func,meth,mod,obj,ref,term,
+    # C programming language:
+    c:member,
+    # Python programming language:
+    py:func,py:mod,
+
+max-line-length=99
+show-source=true
+enable-extensions=G
+import-order-style=pycharm
+docstring-convention=google
+
+# flake8-pytest-style
+pytest-fixture-no-parentheses=true
+pytest-parametrize-names-type=tuple
+pytest-parametrize-values-type=tuple
+pytest-parametrize-values-row-type=tuple
+pytest-mark-no-parentheses=true
+
+# Maximum Cyclomatic Complexity allowed
+max-complexity = 5
+radon-max-cc = 5
+
+# Set the application name
+application-import-names=asgi_signing_middleware
+
+# Ignores per files
+per-file-ignores =
+    # False positives, see https://github.com/PyCQA/pydocstyle/issues/514
+    # ToDo: remove once that is fixed
+    asgi_signing_middleware/cookie.py: D417
+    # <>

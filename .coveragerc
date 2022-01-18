@@ -1,0 +1,6 @@
+[run]
+source = asgi_signing_middleware
+
+[report]
+exclude_lines =
+    if typing.TYPE_CHECKING:
