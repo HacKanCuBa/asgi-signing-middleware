@@ -549,6 +549,12 @@ class TestSimpleSignedCookieMiddlewareForFastAPI(
         )
 
 
+class TestSimpleSignedCookieMiddlewareForFastAPIPy38(TestSimpleSignedCookieMiddlewareForFastAPI):
+    """Test SimpleSignedCookieMiddleware for FastAPI, hack for Pytest under Python 3.8."""
+
+    __new__ = object.__new__
+
+
 class TestSerializedSignedCookieMiddlewareForFastAPI(
         SignedCookieMiddlewareTestsForFastAPIBase[SerializedSignedCookieMiddleware, JSONTypes],
 ):
@@ -670,6 +676,14 @@ class TestSerializedSignedCookieMiddlewareForFastAPI(
         )
 
 
+class TestSerializedSignedCookieMiddlewareForFastAPIPy38(
+        TestSerializedSignedCookieMiddlewareForFastAPI,
+):
+    """Test SerializedSignedCookieMiddleware for FastAPI, hack for Pytest under Python 3.8."""
+
+    __new__ = object.__new__
+
+
 class TestSimpleSignedCookieMiddlewareForStarlette(
         SignedCookieMiddlewareTestsForStarletteBase[SimpleSignedCookieMiddleware, str],
 ):
@@ -748,6 +762,14 @@ class TestSimpleSignedCookieMiddlewareForStarlette(
             httponly=False,
             samesite='lax',
         )
+
+
+class TestSimpleSignedCookieMiddlewareForStarlettePy38(
+        TestSimpleSignedCookieMiddlewareForStarlette,
+):
+    """Test SimpleSignedCookieMiddleware for Starlette, hack for Pytest under Python 3.8."""
+
+    __new__ = object.__new__
 
 
 class TestSerializedSignedCookieMiddlewareForStarlette(
@@ -869,3 +891,11 @@ class TestSerializedSignedCookieMiddlewareForStarlette(
             httponly=False,
             samesite='lax',
         )
+
+
+class TestSerializedSignedCookieMiddlewareForStarlettePy38(
+        TestSerializedSignedCookieMiddlewareForStarlette,
+):
+    """Test SerializedSignedCookieMiddleware for Starlette, hack for Pytest under Python 3.8."""
+
+    __new__ = object.__new__
