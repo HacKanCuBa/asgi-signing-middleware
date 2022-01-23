@@ -52,7 +52,7 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from .cookie import SerializedSignedCookieMiddleware
 from .cookie import SimpleSignedCookieMiddleware
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 __all__ = (
     'SerializedSignedCookieMiddleware',

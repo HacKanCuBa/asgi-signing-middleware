@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2 - 2022-01-23
+
+**Added**
+
+* Add tests and docs for Starlite.
+
 ## 0.1.1 - 2022-01-20
 
 **Added**

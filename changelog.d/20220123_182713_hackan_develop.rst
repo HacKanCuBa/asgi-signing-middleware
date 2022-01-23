@@ -1,4 +1,0 @@
-Added
------
-
-- Add tests and docs for Starlite.
