@@ -71,6 +71,7 @@ types-setuptools = "^57.4.5"
 darglint = "^1.8.1"
 fastapi = "^0"
 uvicorn = "^0"
+starlite = "^0"
 
 [build-system]
 requires = ["poetry>=0.12"]

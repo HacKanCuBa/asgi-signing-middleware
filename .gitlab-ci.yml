@@ -46,6 +46,20 @@ poetry cache py3.10:
 poetry cache py3.11:
   extends: .poetry cache
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.11rc"
+  script:
+    # ToDo: there's no orjson wheel yet for 3.11, remove this when there's one.
+    # Check if we need to install everything or just check for changes in the package lock
+    - set -euo pipefail
+    - if poetry env info -p; then
+      echo "We have a cached venv";
+      else
+      echo "No cache, installing everything...";
+      apt-get update && apt-get install -y curl;
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup.sh;
+      sh rustup.sh -v -y;
+      source $HOME/.cargo/env;
+      fi;
+    - time poetry install --no-ansi --remove-untracked
   allow_failure: true
   cache:
     key: "py311rc-${CI_COMMIT_REF_SLUG}"
@@ -53,6 +67,10 @@ poetry cache py3.11:
 poetry cache pypy3.8:
   extends: .poetry cache
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.8pypy"
+  script:
+    # orjson will prob never work on PyPy, so I need to remove Starlite entirely
+    - time poetry remove --no-ansi --dev starlite
+    - time poetry install --no-ansi --remove-untracked
   cache:
     key: "pypy38-${CI_COMMIT_REF_SLUG}"
 
@@ -149,7 +167,8 @@ tests py3.11:
     - packages security
   script:
     # ToDo: Invoke is not working in Python 3.11, see https://github.com/pyinvoke/invoke/issues/833
-    - poetry run pytest --suppress-no-test-exit-code
+    - poetry run pytest --suppress-no-test-exit-code --ignore tests
+    - poetry run pytest --suppress-no-test-exit-code --ignore asgi_signing_middleware/tests --cov-append
   cache:
     key: "py311rc-${CI_COMMIT_REF_SLUG}"
   allow_failure: true
@@ -157,6 +176,8 @@ tests py3.11:
 tests pypy3.8:
   extends: .tests
   image: "registry.gitlab.com/nevrona/public/poetry-docker:1.1.12-3.8pypy"
+  script:
+    - time poetry run inv tests --no-coverage  # skip coverage because we can't really test in pypy
   needs:
     - poetry cache pypy3.8
     - python lint

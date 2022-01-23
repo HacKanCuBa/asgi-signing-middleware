@@ -155,3 +155,61 @@ It will append every new value to the previous one, show it in the JSON response
             'value': request.state.msgs,
         }
     ```
+
+=== "Starlite"
+
+    ```python
+    """Example Starlite app."""
+
+    from starlette.middleware import Middleware
+    from starlite import Request
+    from starlite import Starlite
+    from starlite import get
+
+    from asgi_signing_middleware import SimpleSignedCookieMiddleware
+
+
+    @get('/')
+    async def root(request: Request, value: str = '') -> dict[str, str]:
+        """Root endpoint.
+
+        Input some string value through the `value` query parameter. That value will
+        be appended to the previous one, signed and stored in a cookie named `cookie`.
+        This will be displayed in the response as a JSON message of the form
+        `{"value": "<value>"}`.
+
+        The signature will be valid for 1', after that the value will reset to an
+        empty string.
+
+        Args:
+            request: The request.
+            value: The string value.
+
+        Returns:
+            A JSON response with the final value.
+        """
+        prev_value: str = request.state.msgs or ''
+        request.state.msgs = prev_value + value
+
+        return {
+            'value': request.state.msgs,
+        }
+
+
+    # Run with `uvicorn --reload <file name without extension>:app`
+    app = Starlite(
+        debug=True,
+        route_handlers=[
+            root,
+        ],
+        middleware=[
+            Middleware(
+                SimpleSignedCookieMiddleware,
+                secret='secret' * 3,
+                state_attribute_name='msgs',
+                cookie_name='cookie',
+                cookie_ttl=60,
+            ),
+        ],
+    )
+    ```
