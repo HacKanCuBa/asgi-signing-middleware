@@ -10,6 +10,6 @@ with mock.patch.object(
 ):
     # We don't have anything to assert really: we need to import the module to cover the
     # line that test for platform and that's as much as we can do...
-    from asgi_signing_middleware.tests import tests_cookie  # noqa
+    from asgi_signing_middleware.tests import tests_cookie_starlite  # noqa
 
     assert platform.python_implementation() == 'PyPy'
