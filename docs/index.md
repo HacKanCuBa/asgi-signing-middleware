@@ -36,6 +36,9 @@ You can check the [releases' page](https://gitlab.com/hackancuba/asgi-signing-mi
 
 - Python 3.8+
 - [blake2signer](https://blake2signer.hackan.net/)
+- [starlette](https://starlette.io/)
+  - or FastAPI
+  - or Starlite
 
 Versions currently tested (check the [pipelines](https://gitlab.com/hackancuba/asgi_signing_middleware/-/pipelines)):
 
