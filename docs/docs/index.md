@@ -2,6 +2,9 @@
 
 The goal of this project is to provide a simple and straightforward way to securely sign data by providing ready-to-use middlewares, using [blake2signer](https://blake2signer.hackan.net/) as signing backend.
 
+!!! question "Looking for another documentation version?"
+    Check out [stable](https://blake2signer.hackan.net/en/stable/) (current tagged version), [latest](https://blake2signer.hackan.net/en/latest/) (current development version) or [each tagged version](https://readthedocs.org/projects/blake2signer).
+
 ## Why would I need to use it?
 
 If you need to store some data (state, generally), and want to avoid using a trusted DB for performance reasons, it is usually advisable to sign said data. This package will help you achieve that with ease, ready-to-use middlewares, without you needing to think on the details: just provide a signing secret and let this package handle the rest.
@@ -52,6 +55,8 @@ Versions currently tested (check the [pipelines](https://gitlab.com/hackancuba/a
 ## Documentation
 
 These docs are generously hosted by [ReadTheDocs](https://readthedocs.org). Check the [project page](https://readthedocs.org/projects/asgi-signing-middleware) to know more and see different versions of these docs.
+
+There are two major documentation versions, besides [each tagged version](https://readthedocs.org/projects/asgi-signing-middleware): [stable](https://asgi-signing-middleware.hackan.net/en/stable/) (current tagged version), and [latest](https://asgi-signing-middleware.hackan.net/en/latest/) (current development version).
 
 ## Notice
 

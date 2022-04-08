@@ -47,6 +47,10 @@ nav:
   - Releases:
     - 'changelog.md'
     - 'signatures.md'
+  - Documentation:
+    - Stable: 'https://asgi-signing-middleware.hackan.net/en/stable/'
+    - Latest: 'https://asgi-signing-middleware.hackan.net/en/latest/'
+    - All: 'https://readthedocs.org/projects/asgi-signing-middleware/'
 
 plugins:
   - search
