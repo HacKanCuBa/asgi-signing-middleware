@@ -46,6 +46,7 @@ nav:
     - 'cookie.md'
   - Releases:
     - 'changelog.md'
+    - 'signatures.md'
 
 plugins:
   - search

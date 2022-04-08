@@ -81,7 +81,7 @@ Once everything is ready for release, follow these steps:
 
 1. Create a new release branch from `develop`: `git flow release start <M.m.p>`
 1. Edit `pyproject.toml` and change `version` (you can use `poetry version major|minor|patch` accordingly to one-up said version part).
-1. Edit `blake2signer/__init__.py` and change `__version__`: `__version__ = '<M.m.p>'`.
+1. Edit `asgi_signing_middleware/__init__.py` and change `__version__`: `__version__ = '<M.m.p>'`.
 1. Collect changelog fragments: `scriv collect`.
 1. Edit the changelog to properly indicate the version.
 1. Copy the edition to the changelog in the docs.
@@ -90,3 +90,9 @@ Once everything is ready for release, follow these steps:
 1. Merge into `main` and create MR to `develop`.
 1. Merge into `develop`, create and push signed tag: `git tag -s <M.m.p>`. A CI job will publish the package to PyPi.
 1. Create release in Gitlab and [properly sign packages](https://gist.github.com/HacKanCuBa/6fabded3565853adebf3dd140e72d33e).
+
+### Signing
+
+To sign a tag, run `inv sign-tag <tag name>`. To sign a file, use `inv sign-file <file name>`.
+
+Read more about [signatures](signatures.md) in this project.
