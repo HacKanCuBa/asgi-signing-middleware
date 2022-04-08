@@ -19,9 +19,10 @@ from invoke import task
 @task
 def flake8(ctx):
     """Run flake8 with proper exclusions."""
-    ctx.run(f'flake8 --exclude tests asgi_signing_middleware/', echo=True)
-    ctx.run(f'flake8 --ignore=S101,R701,C901 asgi_signing_middleware/tests/', echo=True)
-    ctx.run(f'flake8 --ignore=S101,R701,C901 tests/', echo=True)
+    ctx.run('flake8 --exclude tests asgi_signing_middleware/', echo=True)
+    ctx.run('flake8 --ignore=S101,R701,C901 asgi_signing_middleware/tests/', echo=True)
+    ctx.run('flake8 --ignore=S101,R701,C901 tests/', echo=True)
+    ctx.run('flake8 tasks.py', echo=True)
 
 
 @task
@@ -29,6 +30,7 @@ def pydocstyle(ctx):
     """Run pydocstyle with proper exclusions."""
     ctx.run('pydocstyle --explain asgi_signing_middleware/', echo=True)
     ctx.run('pydocstyle --explain tests/', echo=True)
+    ctx.run('pydocstyle --explain tasks.py', echo=True)
 
 
 @task
@@ -36,21 +38,23 @@ def darglint(ctx):
     """Run darglint."""
     ctx.run('darglint -v2 asgi_signing_middleware/', echo=True)
     ctx.run('darglint -v2 tests/', echo=True)
+    ctx.run('darglint -v2 tasks.py', echo=True)
 
 
 @task
 def bandit(ctx):
     """Run bandit with proper exclusions."""
-    ctx.run(f'bandit -i -r -x asgi_signing_middleware/tests asgi_signing_middleware/', echo=True)
-    ctx.run(f'bandit -i -r -s B101 asgi_signing_middleware/tests/', echo=True)
-    ctx.run(f'bandit -i -r -s B101 tests/', echo=True)
+    ctx.run('bandit -i -r -x asgi_signing_middleware/tests asgi_signing_middleware/', echo=True)
+    ctx.run('bandit -i -r -s B101 asgi_signing_middleware/tests/', echo=True)
+    ctx.run('bandit -i -r -s B101 tests/', echo=True)
+    ctx.run('bandit -i -r tasks.py', echo=True)
 
 
 @task
 def mypy(ctx):
     """Hint code with mypy."""
-    ctx.run(f'mypy asgi_signing_middleware/', echo=True, pty=True)
-    ctx.run(f'mypy tests/', echo=True, pty=True)
+    ctx.run('mypy asgi_signing_middleware/', echo=True, pty=True)
+    ctx.run('mypy tests/', echo=True, pty=True)
 
 
 @task
@@ -64,6 +68,7 @@ def yapf(ctx, diff=False):
 
     cmd.append('asgi_signing_middleware/')
     cmd.append('tests/')
+    cmd.append('tasks.py')
 
     ctx.run(' '.join(cmd), echo=True)
 
@@ -71,9 +76,10 @@ def yapf(ctx, diff=False):
 @task
 def trailing_commas(ctx):
     """Add missing trailing commas or remove it if necessary."""
-    opts = f'-type f -name "*.py" -exec add-trailing-comma "{{}}" \\+'
+    opts = r'-type f -name "*.py" -exec add-trailing-comma "{}" \+'  # noqa: P103
     ctx.run('find asgi_signing_middleware/ ' + opts, echo=True, pty=True, warn=True)
     ctx.run('find tests/ ' + opts, echo=True, pty=True, warn=True)
+    ctx.run('add-trailing-comma tasks.py', echo=True, pty=True, warn=True)
 
 
 # noinspection PyUnusedLocal
@@ -103,7 +109,7 @@ def clean(ctx):
         'site',
     )
     ctx.run(f'rm -vrf {" ".join(remove)}', echo=True)
-    ctx.run('find . -type d -name "__pycache__" -exec rm -rf "{}" \\+', echo=True)
+    ctx.run(r'find . -type d -name "__pycache__" -exec rm -rf "{}" \+', echo=True)  # noqa: P103
     ctx.run('find . -type f -name "*.pyc" -delete', echo=True)
 
 
@@ -112,7 +118,7 @@ def clean(ctx):
     help={
         'watch': 'run tests continuously with pytest-watch',
         'seed': 'seed number to repeat a randomization sequence',
-    }
+    },
 )
 def tests(ctx, watch=False, seed=0, coverage=True):
     """Run tests."""
@@ -159,7 +165,7 @@ def safety(ctx):
     aliases=['cc'],
     help={
         'complex': 'filter results to show only potentially complex functions (B+)',
-    }
+    },
 )
 def cyclomatic_complexity(ctx, complex_=False):
     """Analise code Cyclomatic Complexity using radon."""
