@@ -167,8 +167,8 @@ tests py3.11:
     - packages security
   script:
     # ToDo: Invoke is not working in Python 3.11, see https://github.com/pyinvoke/invoke/issues/833
-    - poetry run pytest --suppress-no-test-exit-code --ignore tests
-    - poetry run pytest --suppress-no-test-exit-code --ignore asgi_signing_middleware/tests --cov-append
+    - poetry run pytest --suppress-no-test-exit-code asgi_signing_middleware
+    - poetry run pytest --suppress-no-test-exit-code --cov-append tests
   cache:
     key: "py311rc-${CI_COMMIT_REF_SLUG}"
   allow_failure: true

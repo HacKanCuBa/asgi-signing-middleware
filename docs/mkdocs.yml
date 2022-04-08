@@ -54,11 +54,11 @@ plugins:
       default_handler: python
       handlers:
         python:
-          docstring_style: 'restructured-text'
+          docstring_style: 'google'
           rendering:
             show_root_heading: true
       watch:
-        - asgi_signing_middleware
+        - ../asgi_signing_middleware
 
 markdown_extensions:
   - toc:

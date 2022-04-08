@@ -44,6 +44,14 @@ Start your local dev environment by activating the virtualenv. I recommend using
 
 After that, install dependencies with `poetry install --remove-untracked`.
 
+### Dependencies
+
+All dependencies are managed by [poetry](https://python-poetry.org/). Project related dependencies are handled at the project's root, whereas docs related dependencies are treated separately in the `docs` subdir.
+
+Splitting dependencies like this is a bit annoying, but it was necessary due to an incompatibility between `mkdocs` and `flake8` (due to [`importlib-metadata`](https://github.com/PyCQA/flake8/pull/1438)). And it turns out to be not that bad, given that now we can create a proper requirements file for [Read The Docs](https://readthedocs.org/projects/blake2signer/).
+
+Therefore, you will need two virtualenv: one for the project, and one for the docs. However, if you use `invoke` then this is taken care for you, and you don't have to worry about the docs venv: it will be created automatically as needed. If you need to interact with said virtualenv, make sure to activate it when entering the docs subdir (poetry should take care of this for you, too).
+
 ### Making PRs
 
 Write your code. Then create a changelog fragment using `scriv create` with a short description of your changes in the corresponding category (added, changed, fixed, etc.).  
