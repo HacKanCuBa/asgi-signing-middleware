@@ -2,6 +2,7 @@
 
 Note: this tests won't run under PyPy, due to orjson not being able to install under PyPy.
 """
+# pylint: disable=R0801
 
 import platform
 import typing
@@ -40,7 +41,7 @@ class SignedCookieMiddlewareTestsForStarliteBase(typing.Generic[TMiddleware, TDa
     def middleware_class(self) -> typing.Type[TMiddleware]:
         """Get this middleware class."""
         return typing.get_args(
-            type(self).__orig_bases__[0],  # type: ignore
+            type(self).__orig_bases__[0],  # type: ignore  # pylint: disable=E1101
         )[0]
 
     @abstractmethod
@@ -65,14 +66,14 @@ class SignedCookieMiddlewareTestsForStarliteBase(typing.Generic[TMiddleware, TDa
             state_attr = state_attribute_name
 
         @get('/')
-        def root(request: 'Request') -> typing.Dict[str, str]:
+        def root(request: Request) -> typing.Dict[str, str]:  # pylint: disable=W0613
             """Main app endpoint."""
             return {
                 'hello': 'world',
             }
 
         @get('/cookie')
-        def cookie_endpoint(request: 'Request') -> None:
+        def cookie_endpoint(request: Request) -> None:
             """Endpoint that writes a cookie."""
             cookie_data = getattr(request.state, state_attr)
             modified_data = self.modify_cookie_value(cookie_data)
@@ -133,7 +134,7 @@ class SignedCookieMiddlewareTestsForStarliteBase(typing.Generic[TMiddleware, TDa
         """Test that `request.state` is used."""
 
         @get('/state')
-        def state_endpoint(request: 'Request') -> None:
+        def state_endpoint(request: Request) -> None:
             """Endpoint that asserts the state value."""
             assert 'existing' == request.state.msgs
 
@@ -353,16 +354,19 @@ class TestSerializedSignedCookieMiddlewareForStarlite(
             return {
                 'extra': 'data',
             }
-        elif isinstance(data, dict):
+
+        if isinstance(data, dict):
             return {
                 **data,
                 **{
                     'extra': 'data',
                 },
             }
-        elif isinstance(data, list):
+
+        if isinstance(data, list):
             return [*data, *['extra']]
-        elif isinstance(data, (float, int)):
+
+        if isinstance(data, (float, int)):
             return data + 1
 
         return data + 'changed'

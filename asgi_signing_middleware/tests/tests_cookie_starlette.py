@@ -1,4 +1,5 @@
 """Tests for the signed cookie module for Starlette."""
+# pylint: disable=R0801
 
 import typing
 from abc import abstractmethod
@@ -32,7 +33,7 @@ class SignedCookieMiddlewareTestsForStarletteBase(typing.Generic[TMiddleware, TD
     def middleware_class(self) -> typing.Type[TMiddleware]:
         """Get this middleware class."""
         return typing.get_args(
-            type(self).__orig_bases__[0],  # type: ignore
+            type(self).__orig_bases__[0],  # type: ignore  # pylint: disable=E1101
         )[0]
 
     @abstractmethod
@@ -56,13 +57,13 @@ class SignedCookieMiddlewareTestsForStarletteBase(typing.Generic[TMiddleware, TD
         else:
             state_attr = state_attribute_name
 
-        def root(request: 'Request') -> JSONResponse:
+        def root(request: Request) -> JSONResponse:  # pylint: disable=W0613
             """Main app endpoint."""
             return JSONResponse({
                 'hello': 'world',
             })
 
-        def cookie_endpoint(request: 'Request') -> JSONResponse:
+        def cookie_endpoint(request: Request) -> JSONResponse:
             """Endpoint that writes a cookie."""
             cookie_data = getattr(request.state, state_attr)
             modified_data = self.modify_cookie_value(cookie_data)
@@ -77,7 +78,7 @@ class SignedCookieMiddlewareTestsForStarletteBase(typing.Generic[TMiddleware, TD
         if routes:
             all_routes.extend(routes)
 
-        middleware = [
+        middleware = (
             Middleware(
                 self.middleware_class,
                 secret=self.secret if secret is None else secret,
@@ -87,7 +88,7 @@ class SignedCookieMiddlewareTestsForStarletteBase(typing.Generic[TMiddleware, TD
                 cookie_properties=cookie_properties,
                 signer_kwargs=signer_kwargs,
             ),
-        ]
+        )
 
         app = Starlette(debug=True, routes=all_routes, middleware=middleware)
 
@@ -120,7 +121,7 @@ class SignedCookieMiddlewareTestsForStarletteBase(typing.Generic[TMiddleware, TD
     def test_state_is_used(self) -> None:
         """Test that `request.state` is used."""
 
-        def state_endpoint(request: 'Request') -> JSONResponse:
+        def state_endpoint(request: Request) -> JSONResponse:
             """Endpoint that asserts the state value."""
             assert 'existing' == request.state.msgs
 
@@ -342,16 +343,19 @@ class TestSerializedSignedCookieMiddlewareForStarlette(
             return {
                 'extra': 'data',
             }
-        elif isinstance(data, dict):
+
+        if isinstance(data, dict):
             return {
                 **data,
                 **{
                     'extra': 'data',
                 },
             }
-        elif isinstance(data, list):
+
+        if isinstance(data, list):
             return [*data, *['extra']]
-        elif isinstance(data, (float, int)):
+
+        if isinstance(data, (float, int)):
             return data + 1
 
         return data + 'changed'

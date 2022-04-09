@@ -93,13 +93,13 @@ def trailing_commas(ctx):
 
 # noinspection PyUnusedLocal
 @task(yapf, trailing_commas)
-def reformat(ctx):
+def reformat(ctx):  # pylint: disable=W0613
     """Reformat code."""
 
 
 # noinspection PyUnusedLocal
 @task(flake8, pylint, pydocstyle, darglint, mypy, bandit)
-def lint(ctx):
+def lint(ctx):  # pylint: disable=W0613
     """Lint code and static analysis."""
 
 

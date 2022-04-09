@@ -85,6 +85,7 @@ class SignedCookieMiddlewareBase(
         # works on Python 3.8+ (see https://stackoverflow.com/a/50101934 and PEP 560).
         # You can alternatively override this method and define the signer class directly,
         # I.E.: return Blake2TimestampSigner
+        # pylint: disable=E1101
         return typing.get_args(type(self).__orig_bases__[0])[0]  # type: ignore
 
     def get_signer(self) -> TSigner:
@@ -134,7 +135,7 @@ class SignedCookieMiddlewareBase(
         return properties
 
     # noinspection PyMethodMayBeStatic
-    def should_write_cookie(
+    def should_write_cookie(  # pylint: disable=R0201
         self,
         *,
         unsigned_data: typing.Optional[TData],

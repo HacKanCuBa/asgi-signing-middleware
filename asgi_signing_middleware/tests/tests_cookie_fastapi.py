@@ -1,4 +1,5 @@
 """Tests for the signed cookie module for FastAPI."""
+# pylint: disable=R0801
 
 import typing
 from abc import abstractmethod
@@ -29,7 +30,7 @@ class SignedCookieMiddlewareTestsForFastAPIBase(typing.Generic[TMiddleware, TDat
     def middleware_class(self) -> typing.Type[TMiddleware]:
         """Get this middleware class."""
         return typing.get_args(
-            type(self).__orig_bases__[0],  # type: ignore
+            type(self).__orig_bases__[0],  # type: ignore  # pylint: disable=E1101
         )[0]
 
     @abstractmethod
@@ -71,7 +72,7 @@ class SignedCookieMiddlewareTestsForFastAPIBase(typing.Generic[TMiddleware, TDat
             }
 
         @app.get('/cookie')
-        def cookie_endpoint(request: 'Request') -> None:
+        def cookie_endpoint(request: Request) -> None:
             """Endpoint that writes a cookie."""
             cookie_data = getattr(request.state, state_attr)
             modified_data = self.modify_cookie_value(cookie_data)
@@ -128,7 +129,7 @@ class SignedCookieMiddlewareTestsForFastAPIBase(typing.Generic[TMiddleware, TDat
         app, client = self.create_app_and_test_client(state_attribute_name='msgs')
 
         @app.get('/state')
-        def state_endpoint(request: 'Request') -> None:
+        def state_endpoint(request: Request) -> None:
             """Endpoint that asserts the state value."""
             assert 'existing' == request.state.msgs
 
@@ -339,16 +340,19 @@ class TestSerializedSignedCookieMiddlewareForFastAPI(
             return {
                 'extra': 'data',
             }
-        elif isinstance(data, dict):
+
+        if isinstance(data, dict):
             return {
                 **data,
                 **{
                     'extra': 'data',
                 },
             }
-        elif isinstance(data, list):
+
+        if isinstance(data, list):
             return [*data, *['extra']]
-        elif isinstance(data, (float, int)):
+
+        if isinstance(data, (float, int)):
             return data + 1
 
         return data + 'changed'
