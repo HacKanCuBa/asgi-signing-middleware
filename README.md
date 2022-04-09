@@ -1,5 +1,6 @@
-[![Pipeline Status](https://img.shields.io/gitlab/pipeline/hackancuba/asgi-signing-middleware/develop?style=plastic)](https://gitlab.com/hackancuba/asgi-signing-middleware/-/pipelines?page=1&scope=all&ref=develop)
 [![Coverage Report](https://img.shields.io/gitlab/coverage/hackancuba/asgi-signing-middleware/develop?style=plastic)](https://gitlab.com/hackancuba/asgi-signing-middleware/-/commits/develop)
+[![Pipeline Status](https://img.shields.io/gitlab/pipeline/hackancuba/asgi-signing-middleware/develop?style=plastic)](https://gitlab.com/hackancuba/asgi-signing-middleware/-/pipelines?page=1&scope=all&ref=develop)
+[![Stable Documentation Status](https://readthedocs.org/projects/asgi-signing-middleware/badge/?version=stable)](https://asgi-signing-middleware.hackan.net/en/stable/?badge=stable)
 [![PyPI Version](https://img.shields.io/pypi/v/asgi-signing-middleware?color=light%20green&style=plastic)](https://pypi.org/project/asgi-signing-middleware)
 [![PyPI Python Versions](https://img.shields.io/pypi/pyversions/asgi-signing-middleware?color=light%20green&style=plastic)](https://pypi.org/project/asgi-signing-middleware)
 [![License](https://img.shields.io/pypi/l/asgi-signing-middleware?color=light%20green&style=plastic)](https://gitlab.com/hackancuba/asgi-signing-middleware/-/blob/main/LICENSE)
