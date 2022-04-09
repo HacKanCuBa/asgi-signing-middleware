@@ -69,6 +69,8 @@ darglint = "^1.8.1"
 fastapi = "^0"
 uvicorn = "^0"
 starlite = "^0"
+pylint = "^2.12.2"
+perflint = "^0"
 
 [build-system]
 requires = ["poetry>=0.12"]

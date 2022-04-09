@@ -42,6 +42,15 @@ def darglint(ctx):
 
 
 @task
+def pylint(ctx):
+    """Run pylint."""
+    ctx.run('pylint asgi_signing_middleware/ --ignore tests', echo=True, pty=True, warn=True)
+    ctx.run('pylint asgi_signing_middleware/tests/ --exit-zero', echo=True, pty=True, warn=True)
+    ctx.run('pylint tests/ --exit-zero', echo=True, pty=True, warn=True)
+    ctx.run('pylint tasks.py --exit-zero', echo=True, pty=True, warn=True)
+
+
+@task
 def bandit(ctx):
     """Run bandit with proper exclusions."""
     ctx.run('bandit -i -r -x asgi_signing_middleware/tests asgi_signing_middleware/', echo=True)
@@ -89,7 +98,7 @@ def reformat(ctx):
 
 
 # noinspection PyUnusedLocal
-@task(flake8, pydocstyle, darglint, mypy, bandit)
+@task(flake8, pylint, pydocstyle, darglint, mypy, bandit)
 def lint(ctx):
     """Lint code and static analysis."""
 
