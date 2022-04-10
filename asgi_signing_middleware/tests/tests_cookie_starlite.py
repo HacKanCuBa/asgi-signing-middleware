@@ -189,17 +189,15 @@ class SignedCookieMiddlewareTestsForStarliteBase(typing.Generic[TMiddleware, TDa
             },
         )
 
-        with pytest.raises(
-                ValueError,
-                match='The `secret` should not be included in the signer kwargs',
-        ):
-            client.get('/')
+        response = client.get('/')
+        assert response.status_code == 500
+        assert response.text.startswith('Traceback (most recent call last)')
+        assert response.text.endswith('The `secret` should not be included in the signer kwargs\n')
 
-        with pytest.raises(
-                ValueError,
-                match='The `secret` should not be included in the signer kwargs',
-        ):
-            client.get('/cookie')
+        response = client.get('/cookie')
+        assert response.status_code == 500
+        assert response.text.startswith('Traceback (most recent call last)')
+        assert response.text.endswith('The `secret` should not be included in the signer kwargs\n')
 
     def test_existing_cookie_is_read_wrong_signature(self) -> None:
         """Test that existing cookie is read with wrong signature."""
