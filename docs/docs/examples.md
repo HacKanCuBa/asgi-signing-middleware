@@ -6,6 +6,8 @@ The following examples are working code and should run as-is.
 
 If you don't have time to read (_ain't nobody got time fo' that!_), check out this short intro example, it is pretty much self-explanatory.
 
+The state attribute will be populated with a [`CookieData`](cookie.md#asgi_signing_middleware.cookie.CookieData) object, containing the actual data, and any exception got from unsigning it. When unsigning fails, the data will be null.
+
 ```python
 """Tl;dr example."""
 
@@ -32,12 +34,12 @@ app.add_middleware(
 def cookie_endpoint(request: Request) -> None:
     # This will only have data that was correctly signed, or None
     cookie_data: typing.Optional[typing.Dict[str, str]] = request.state.messages
-    print(cookie_data)
+    print(cookie_data)  # CookieData(data=..., exc=...)
 
     # ...
 
     # This will be signed and written into the cookie
-    request.state.messages = {'A Title': 'The message', 'Another title': 'With another msg'}
+    request.state.messages.data = {'A Title': 'The message', 'Another title': 'With another msg'}
 ```
 
 ## Simple signed cookie app
@@ -84,10 +86,11 @@ It will append every new value to the previous one, show it in the JSON response
             A JSON response with the final value.
         """
         value: str = request.query_params.get('value', '')
-        prev_value: str = request.state.msgs or ''
-        request.state.msgs = prev_value + value
+        prev_value: str = request.state.msgs.data or ''
+        new_value = prev_value + value
+        request.state.msgs.data = new_value
 
-        return JSONResponse({'value': request.state.msgs})
+        return JSONResponse({'value': new_value})
 
 
     # Run with `uvicorn --reload <file name without extension>:app`
@@ -130,7 +133,7 @@ It will append every new value to the previous one, show it in the JSON response
 
 
     @app.get('/')
-    async def root(request: Request) -> dict[str, str]:
+    async def root(request: Request, value: str = '') -> dict[str, str]:
         """Root endpoint.
 
         Input some string value through the `value` query parameter. That value will
@@ -147,12 +150,12 @@ It will append every new value to the previous one, show it in the JSON response
         Returns:
             A JSON response with the final value.
         """
-        value: str = request.query_params.get('value', '')
-        prev_value: str = request.state.msgs or ''
-        request.state.msgs = prev_value + value
+        prev_value: str = request.state.msgs.data or ''
+        new_value = prev_value + value
+        request.state.msgs.data = new_value
 
         return {
-            'value': request.state.msgs,
+            'value': new_value,
         }
     ```
 
@@ -188,11 +191,12 @@ It will append every new value to the previous one, show it in the JSON response
         Returns:
             A JSON response with the final value.
         """
-        prev_value: str = request.state.msgs or ''
-        request.state.msgs = prev_value + value
+        prev_value: str = request.state.msgs.data or ''
+        new_value = prev_value + value
+        request.state.msgs.data = new_value
 
         return {
-            'value': request.state.msgs,
+            'value': new_value,
         }
 
 
@@ -311,7 +315,7 @@ This very simple app has an endpoint in the root path (`/`) that salutes a logge
     from starlette.middleware.authentication import AuthenticationMiddleware
     from starlette.requests import HTTPConnection
     from starlette.requests import Request
-    from starlette.responses import JSONResponse
+    from starlette.responses import JSONResponse, Response
     from starlette.routing import Route
     from starlette.status import HTTP_401_UNAUTHORIZED
 
@@ -326,28 +330,29 @@ This very simple app has an endpoint in the root path (`/`) that salutes a logge
             conn: HTTPConnection,
         ) -> typing.Optional[typing.Tuple[AuthCredentials, BaseUser]]:
             """Authenticate the user."""
-            user = conn.state.user
-            cookie = conn.cookies.get('user')
-            if not user:
-                if cookie:
-                    raise AuthenticationError('Invalid authentication cookie')
+            cookie_data = conn.state.user
+            if cookie_data.exc:
+                raise AuthenticationError('Invalid authentication cookie')
 
+            user_data = cookie_data.data
+            if not user_data:
                 return
 
-            return AuthCredentials(['authenticated']), SimpleUser(user['username'])
+            return AuthCredentials(['authenticated']), SimpleUser(user_data['username'])
 
 
     @requires('authenticated')
     async def root(request: Request) -> JSONResponse:
         """Root endpoint (access restricted)."""
-        user = request.state.user
+        cookie_data = request.state.user
+        user_data = cookie_data.data
         since = datetime.fromtimestamp(
-            user['registered-on'],
+            user_data['registered-on'],
             tz=timezone.utc,
         ).isoformat(timespec='seconds')
 
         return JSONResponse({
-            'hello': user['username'],
+            'hello': user_data['username'],
             'since': since,
         })
 
@@ -366,12 +371,21 @@ This very simple app has an endpoint in the root path (`/`) that salutes a logge
         except KeyError:
             raise unauthorized_exception
 
-        request.state.user = {
+        request.state.user.data = {
             'username': username,
             'registered-on': datetime.now(tz=timezone.utc).timestamp(),
         }
 
         return JSONResponse({'registered': username})
+
+
+    @requires('authenticated')
+    async def logout(request: Request) -> Response:
+        """Log out, if you were logged in."""
+        # You should probably implement some sort of blocklist for the actual cookie data
+        request.state.user.data = {}
+    
+        return Response(status_code=204)
 
 
     # Run with `uvicorn --reload <file name without extension>:app`
@@ -380,6 +394,7 @@ This very simple app has an endpoint in the root path (`/`) that salutes a logge
         routes=[
             Route('/', root),
             Route('/login', login, methods=['POST']),
+            Route('/logout', logout, methods=['POST']),
         ],
         # The order matters! Set the SerializedSignedCookieMiddleware first, so the request
         # state is properly set on the SignedCookieAuthBackend
@@ -433,15 +448,15 @@ This very simple app has an endpoint in the root path (`/`) that salutes a logge
             conn: HTTPConnection,
         ) -> typing.Optional[typing.Tuple[AuthCredentials, BaseUser]]:
             """Authenticate the user."""
-            user = conn.state.user
-            cookie = conn.cookies.get('user')
-            if not user:
-                if cookie:
-                    raise AuthenticationError('Invalid authentication cookie')
+            cookie_data = conn.state.user
+            if cookie_data.exc:
+                raise AuthenticationError('Invalid authentication cookie')
 
-                return
+            user_data = cookie_data.data
+            if not user_data:
+                return None
 
-            return AuthCredentials(['authenticated']), SimpleUser(user['username'])
+            return AuthCredentials(['authenticated']), SimpleUser(user_data['username'])
 
 
     # Run with `uvicorn --reload <file name without extension>:app`
@@ -470,14 +485,15 @@ This very simple app has an endpoint in the root path (`/`) that salutes a logge
     @requires('authenticated')
     async def root(request: Request):
         """Root endpoint (access restricted)."""
-        user = request.state.user
+        cookie_data = request.state.user
+        user_data = cookie_data.data
         since = datetime.fromtimestamp(
-            user['registered-on'],
+            user_data['registered-on'],
             tz=timezone.utc,
         ).isoformat(timespec='seconds')
 
         return {
-            'hello': user['username'],
+            'hello': user_data['username'],
             'since': since,
         }
 
@@ -485,7 +501,7 @@ This very simple app has an endpoint in the root path (`/`) that salutes a logge
     @app.post('/login')
     async def login(request: Request, username: str = Body(..., embed=True)):
         """Log in with given user."""
-        request.state.user = {
+        request.state.user.data = {
             'username': username,
             'registered-on': datetime.now(tz=timezone.utc).timestamp(),
         }
@@ -493,6 +509,14 @@ This very simple app has an endpoint in the root path (`/`) that salutes a logge
         return {
             'registered': username,
         }
+
+
+    @app.post('/logout', status_code=204)
+    @requires('authenticated')
+    async def logout(request: Request) -> None:
+        """Log out, if you were logged in."""
+        # You should probably implement some sort of blocklist for the actual cookie data
+        request.state.user.data = {}
     ```
 
 === "StarLite"
@@ -522,7 +546,7 @@ This very simple app has an endpoint in the root path (`/`) that salutes a logge
     def authenticated_guard(request: Request, _: HTTPRouteHandler) -> None:
         """Guard for authenticated users."""
         if not request.user:
-            raise NotAuthorizedException('User data is not valid')
+            raise NotAuthorizedException('You need to login first')
 
 
     class SignedCookieAuthMiddleware(AbstractAuthenticationMiddleware):
@@ -531,28 +555,29 @@ This very simple app has an endpoint in the root path (`/`) that salutes a logge
         async def authenticate_request(self, request: HTTPConnection) -> AuthenticationResult:
             """Authenticate the user."""
             # retrieve the auth header
-            user = request.state.user
-            cookie = request.cookies.get('user')
-            if not user:
-                if cookie:
-                    raise NotAuthorizedException('Invalid authentication cookie')
+            cookie_data = request.state.user
+            if cookie_data.exc:
+                raise NotAuthorizedException('Invalid authentication cookie')
 
+            user_data = cookie_data.data
+            if not user_data:
                 return AuthenticationResult(user=None)
 
-            return AuthenticationResult(user=user)
+            return AuthenticationResult(user=user_data)
 
 
     @get('/', guards=[authenticated_guard])
     async def root(request: Request) -> typing.Dict[str, str]:
         """Root endpoint (access restricted)."""
-        user = request.state.user
+        cookie_data = request.state.user
+        user_data = cookie_data.data
         since = datetime.fromtimestamp(
-            user['registered-on'],
+            user_data['registered-on'],
             tz=timezone.utc,
         ).isoformat(timespec='seconds')
 
         return {
-            'hello': user['username'],
+            'hello': user_data['username'],
             'since': since,
         }
 
@@ -572,7 +597,7 @@ This very simple app has an endpoint in the root path (`/`) that salutes a logge
         except KeyError:
             raise unauthorized_exception
 
-        request.state.user = {
+        request.state.user.data = {
             'username': username,
             'registered-on': datetime.now(tz=timezone.utc).timestamp(),
         }
@@ -580,6 +605,13 @@ This very simple app has an endpoint in the root path (`/`) that salutes a logge
         return {
             'registered': username,
         }
+
+
+    @post('/logout', guards=[authenticated_guard], status_code=204)
+    async def logout(request: Request) -> None:
+        """Log out, if you were logged in."""
+        # You should probably implement some sort of blocklist for the actual cookie data
+        request.state.user.data = {}
 
 
     # Run with `uvicorn --reload <file name without extension>:app`

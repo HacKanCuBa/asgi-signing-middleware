@@ -7,6 +7,7 @@ and complex data structures.
 
 import typing
 from abc import abstractmethod
+from dataclasses import dataclass
 
 from blake2signer import Blake2SerializerSigner
 from blake2signer import Blake2TimestampSigner
@@ -23,6 +24,13 @@ if typing.TYPE_CHECKING:
     from starlette.responses import Response
     from starlette.middleware.base import RequestResponseEndpoint
     from starlette.types import ASGIApp
+
+
+@dataclass
+class CookieData(typing.Generic[TData]):
+    """Cookie data container."""
+    data: typing.Optional[TData]
+    exc: typing.Optional[Exception] = None
 
 
 class SignedCookieMiddlewareBase(
@@ -138,8 +146,8 @@ class SignedCookieMiddlewareBase(
     def should_write_cookie(  # pylint: disable=R0201
         self,
         *,
-        unsigned_data: typing.Optional[TData],
-        state_data: TData,
+        new_data: TData,
+        prev_data: typing.Optional[TData],
     ) -> bool:
         """Return True if data should be written to the cookie, False otherwise.
 
@@ -150,9 +158,9 @@ class SignedCookieMiddlewareBase(
         Returns:
             True if new data should be written to the cookie, False otherwise.
         """
-        return state_data != unsigned_data
+        return prev_data != new_data
 
-    def read_cookie(self, request: 'Request') -> TData:
+    def read_cookie(self, request: 'Request') -> typing.Optional[TData]:
         """Get data from the cookie, checking its signature.
 
         Note that if the signature is wrong, an exception is raised (any subclass of
@@ -165,6 +173,9 @@ class SignedCookieMiddlewareBase(
             SignedDataError: the signature was wrong, missing, or otherwise incorrect.
         """
         signed_data = request.cookies.get(self.cookie_name, '')
+        if not signed_data:
+            return None
+
         data: TData = self.unsign(signed_data)  # may raise SignedDataError
 
         return data
@@ -180,6 +191,18 @@ class SignedCookieMiddlewareBase(
             **self.cookie_properties,  # type: ignore
         )
 
+    def write_cookie_if_necessary(
+        self,
+        *,
+        new_data: typing.Optional[TData],
+        prev_data: typing.Optional[TData],
+        response: 'Response',
+    ) -> None:
+        """Write the cookie in the response after signing it, if there's data to write."""
+        if new_data is not None:
+            if self.should_write_cookie(new_data=new_data, prev_data=prev_data):
+                self.write_cookie(new_data, response)
+
     async def dispatch(
         self,
         request: 'Request',
@@ -193,27 +216,26 @@ class SignedCookieMiddlewareBase(
         Returns:
             A response.
         """
-        data: typing.Optional[TData]
+        data: typing.Optional[TData] = None
+        exception: typing.Optional[Exception] = None
         try:
             data = self.read_cookie(request)
-        except SignedDataError:  # some tampering, maybe we changed the secret...
-            data = None
+        except SignedDataError as exc:  # some tampering, maybe we changed the secret...
+            exception = exc
 
-        setattr(request.state, self.state_attribute_name, data)
+        state_attribute_name = self.state_attribute_name
+        state = request.state
+        setattr(state, state_attribute_name, CookieData(data=data, exc=exception))
 
         response = await call_next(request)
 
-        new_data: typing.Optional[TData] = getattr(
-            request.state,
-            self.state_attribute_name,
-            None,
-        )
-
-        if new_data is not None and self.should_write_cookie(
-                unsigned_data=data,
-                state_data=new_data,
-        ):
-            self.write_cookie(new_data, response)
+        new_cookie: typing.Optional[CookieData] = getattr(state, state_attribute_name, None)
+        if new_cookie:
+            self.write_cookie_if_necessary(
+                new_data=new_cookie.data,
+                prev_data=data,
+                response=response,
+            )
 
         return response
 

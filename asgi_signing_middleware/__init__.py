@@ -28,12 +28,12 @@ app.add_middleware(
 @app.get('/cookie')
 def cookie_endpoint(request: Request) -> None:
     # This will only have data that was correctly signed, or None
-    cookie_data: typing.Optional[typing.Dict[str, str]] = request.state.messages
+    cookie_data: typing.Optional[typing.Dict[str, str]] = request.state.messages.data
 
     # ...
 
     # This will be signed and written into the cookie
-    request.state.messages = {'A Title': 'The message', 'Another title': 'With another msg'}
+    request.state.messages.data = {'A Title': 'The message', 'Another title': 'With another msg'}
 ```
 
 ASGI Signing Middleware is made by `HacKan <https://hackan.net>`_ under MPL v2.0. You are
@@ -49,12 +49,14 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """
 
+from .cookie import CookieData
 from .cookie import SerializedSignedCookieMiddleware
 from .cookie import SimpleSignedCookieMiddleware
 
 __version__ = '0.1.2'
 
 __all__ = (
+    'CookieData',
     'SerializedSignedCookieMiddleware',
     'SimpleSignedCookieMiddleware',
 )

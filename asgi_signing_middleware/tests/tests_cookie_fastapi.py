@@ -6,6 +6,7 @@ from abc import abstractmethod
 from unittest import mock
 
 import pytest
+from blake2signer.errors import InvalidSignatureError
 from fastapi import FastAPI
 from starlette.requests import Request
 from starlette.testclient import TestClient
@@ -75,8 +76,8 @@ class SignedCookieMiddlewareTestsForFastAPIBase(typing.Generic[TMiddleware, TDat
         def cookie_endpoint(request: Request) -> None:
             """Endpoint that writes a cookie."""
             cookie_data = getattr(request.state, state_attr)
-            modified_data = self.modify_cookie_value(cookie_data)
-            setattr(request.state, state_attr, modified_data)
+            modified_data = self.modify_cookie_value(cookie_data.data)
+            cookie_data.data = modified_data
 
         return app
 
@@ -131,7 +132,8 @@ class SignedCookieMiddlewareTestsForFastAPIBase(typing.Generic[TMiddleware, TDat
         @app.get('/state')
         def state_endpoint(request: Request) -> None:
             """Endpoint that asserts the state value."""
-            assert 'existing' == request.state.msgs
+            assert 'existing' == request.state.msgs.data
+            assert request.state.msgs.exc is None
 
         with mock.patch.object(
                 self.middleware_class,
@@ -181,13 +183,19 @@ class SignedCookieMiddlewareTestsForFastAPIBase(typing.Generic[TMiddleware, TDat
                 ValueError,
                 match='The `secret` should not be included in the signer kwargs',
         ):
-            client.get('/')
+            client.get(
+                '/',
+                cookies={self.cookie_name: 'some value'},
+            )
 
         with pytest.raises(
                 ValueError,
                 match='The `secret` should not be included in the signer kwargs',
         ):
-            client.get('/cookie')
+            client.get(
+                '/cookie',
+                cookies={self.cookie_name: 'some value'},
+            )
 
     def test_existing_cookie_is_read_wrong_signature(self) -> None:
         """Test that existing cookie is read with wrong signature."""
@@ -207,8 +215,8 @@ class SignedCookieMiddlewareTestsForFastAPIBase(typing.Generic[TMiddleware, TDat
         assert 200 == response.status_code
         assert response.json() is None
         mock_should_write_cookie.assert_called_once_with(
-            unsigned_data=None,  # data in cookie is ignored
-            state_data=self.modify_cookie_value(None),
+            prev_data=None,  # data in cookie is ignored
+            new_data=self.modify_cookie_value(None),
         )
 
     def test_cookie_is_set_with_properties(self) -> None:
@@ -241,6 +249,142 @@ class SignedCookieMiddlewareTestsForFastAPIBase(typing.Generic[TMiddleware, TDat
             httponly=False,
             samesite='lax',
         )
+
+    def test_no_cookie_no_sig_check(self) -> None:
+        """Test that when there's no cookie, no signature is checked."""
+        client = self.create_test_client()
+
+        patch_target = f'asgi_signing_middleware.cookie.{self.middleware_class.__name__}.unsign'
+        with mock.patch(patch_target) as mock_unsign:
+            response = client.get('/')
+
+        assert response.status_code == 200
+        mock_unsign.assert_not_called()
+
+    def test_no_cookie_no_data(self) -> None:
+        """Test that when there's no cookie, data is null."""
+        app, client = self.create_app_and_test_client()
+
+        @app.get('/state')
+        def state_endpoint(request: Request) -> None:
+            """Endpoint that asserts the state value."""
+            cookie_data = getattr(request.state, self.state_attribute_name)
+            assert cookie_data.data is None
+            assert cookie_data.exc is None
+
+        patch_target = f'asgi_signing_middleware.cookie.{self.middleware_class.__name__}.unsign'
+        with mock.patch(patch_target) as mock_unsign:
+            response = client.get('/state')
+
+        assert response.status_code == 200
+        mock_unsign.assert_not_called()
+
+    def test_cookie_read_with_sig_check(self) -> None:
+        """Test that when there's no cookie, no signature is checked."""
+        client = self.create_test_client()
+
+        patch_target = f'asgi_signing_middleware.cookie.{self.middleware_class.__name__}.unsign'
+        with mock.patch(patch_target, side_effect=InvalidSignatureError) as mock_unsign:
+            response = client.get(
+                '/',
+                cookies={self.cookie_name: 'some data'},
+            )
+
+        assert response.status_code == 200
+        mock_unsign.assert_called_once_with('some data')
+
+    def test_state_signer_exception(self) -> None:
+        """Test that we can read the signer exception from any handler."""
+        app, client = self.create_app_and_test_client()
+
+        @app.get('/state')
+        def state_endpoint(request: Request) -> None:
+            """Endpoint that asserts the state value."""
+            cookie_data = getattr(request.state, self.state_attribute_name)
+            assert cookie_data.data is None
+            assert isinstance(cookie_data.exc, InvalidSignatureError)
+
+        patch_target = f'asgi_signing_middleware.cookie.{self.middleware_class.__name__}.unsign'
+        with mock.patch(patch_target, side_effect=InvalidSignatureError) as mock_unsign:
+            response = client.get(
+                '/state',
+                cookies={self.cookie_name: 'some data'},
+            )
+
+        assert response.status_code == 200
+        mock_unsign.assert_called_once_with('some data')
+
+    def test_state_expected_cookie_value(self) -> None:
+        """Test that we got the expected cookie value in the handler."""
+        app, client = self.create_app_and_test_client()
+
+        @app.get('/state')
+        def state_endpoint(request: Request) -> None:
+            """Endpoint that asserts the state value."""
+            cookie_data = getattr(request.state, self.state_attribute_name)
+            assert cookie_data.data == 'some data'
+            assert cookie_data.exc is None
+
+        patch_target = f'asgi_signing_middleware.cookie.{self.middleware_class.__name__}.unsign'
+        with mock.patch(patch_target, return_value='some data') as mock_unsign:
+            response = client.get(
+                '/state',
+                cookies={self.cookie_name: 'some data'},
+            )
+
+        assert response.status_code == 200
+        mock_unsign.assert_called_once_with('some data')
+
+    def test_reset_cookie_data(self) -> None:
+        """Test that we can reset cookie data (setting it as blank)."""
+        app, client = self.create_app_and_test_client()
+
+        @app.get('/state')
+        def state_endpoint(request: Request) -> None:
+            """Endpoint that asserts the state value."""
+            cookie_data = getattr(request.state, self.state_attribute_name)
+            assert cookie_data.data == 'some data'
+            assert cookie_data.exc is None
+
+            cookie_data.data = ''
+
+        patch_target = f'asgi_signing_middleware.cookie.{self.middleware_class.__name__}.unsign'
+        with mock.patch.object(self.middleware_class, 'write_cookie') as mock_write_cookie:
+            with mock.patch(patch_target, return_value='some data') as mock_unsign:
+                response = client.get(
+                    '/state',
+                    cookies={self.cookie_name: 'some data'},
+                )
+
+        assert response.status_code == 200
+        mock_unsign.assert_called_once_with('some data')
+        mock_write_cookie.assert_called_once()
+        assert mock_write_cookie.call_args[0][0] == ''
+
+    def test_do_not_reset_cookie_data(self) -> None:
+        """Test that we do not reset cookie data when setting it to null."""
+        app, client = self.create_app_and_test_client()
+
+        @app.get('/state')
+        def state_endpoint(request: Request) -> None:
+            """Endpoint that asserts the state value."""
+            cookie_data = getattr(request.state, self.state_attribute_name)
+            assert cookie_data.data == 'some data'
+            assert cookie_data.exc is None
+
+            cookie_data.data = None
+
+        patch_target = f'asgi_signing_middleware.cookie.{self.middleware_class.__name__}.unsign'
+        with mock.patch.object(self.middleware_class, 'write_cookie') as mock_write_cookie:
+            with mock.patch(patch_target, return_value='some data') as mock_unsign:
+                response = client.get(
+                    '/state',
+                    cookies={self.cookie_name: 'some data'},
+                )
+
+        assert response.status_code == 200
+        mock_unsign.assert_called_once_with('some data')
+        mock_write_cookie.assert_not_called()
 
 
 class TestSimpleSignedCookieMiddlewareForFastAPI(

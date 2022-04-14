@@ -12,7 +12,7 @@ TSigner = typing.TypeVar('TSigner', Blake2TimestampSigner, Blake2SerializerSigne
 JSONTypes = typing.Union[str, typing.Dict[str, typing.Any], int, float, typing.List[typing.Any]]
 
 # Generic data type
-TData = typing.TypeVar('TData', bound=JSONTypes)
+TData = typing.TypeVar('TData')
 
 # Cookie properties accepted by Starlette's `Response.set_cookie`, as a type
 # Using a TypedDict proved to be too complicated and forced a very particular usage, so
