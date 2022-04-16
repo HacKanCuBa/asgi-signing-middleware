@@ -33,7 +33,7 @@ app.add_middleware(
 @app.get('/cookie')
 def cookie_endpoint(request: Request) -> None:
     # This will only have data that was correctly signed, or None
-    cookie_data: typing.Optional[typing.Dict[str, str]] = request.state.messages
+    cookie_data: typing.Optional[typing.Dict[str, str]] = request.state.messages.data
     print(cookie_data)  # CookieData(data=..., exc=...)
 
     # ...
