@@ -22,6 +22,10 @@ classifiers = [
     "Typing :: Typed",
 ]
 
+[tool.poetry.urls]
+"Changelog" = "https://asgi-signing-middleware.hackan.net/en/latest/changelog"
+"Issues" = "https://gitlab.com/hackancuba/asgi-signing-middleware/-/issues"
+
 [tool.poetry.dependencies]
 python = "^3.8"
 blake2signer = "^2.1.0"
